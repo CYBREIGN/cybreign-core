@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+BASE_URL="https://raw.githubusercontent.com/cybreign/cybreign-core/main"
+TOOLS_JSON="$BASE_URL/tools.json"
+
+show_help() {
+echo "CYBREIGN Tool Manager
+
+Usage:
+  cybreign list
+  cybreign search <name>
+  cybreign install <tool>
+  cybreign info <tool>
+  cybreign update <tool>
+
+Examples:
+  cybreign install javix
+  cybreign search java
+"
+}
+
+list_tools() {
+curl -s $TOOLS_JSON | grep '"name"' | cut -d '"' -f4
+}
+
+search_tool() {
+curl -s $TOOLS_JSON | grep -i "$1"
+}
+
+install_tool() {
+
+TOOL=$1
+
+if [ -z "$TOOL" ]; then
+ echo "Tool name required"
+ exit 1
+fi
+
+URL="$BASE_URL/utils/${TOOL}.deb"
+
+echo "[CYBREIGN] Installing $TOOL..."
+
+curl -L "$URL" -o /tmp/${TOOL}.deb
+
+dpkg -i /tmp/${TOOL}.deb
+
+echo "$TOOL installed."
+}
+
+info_tool() {
+curl -s $TOOLS_JSON | grep -A4 "$1"
+}
+
+update_tool() {
+install_tool "$1"
+}
+
+case "$1" in
+
+list)
+list_tools
+;;
+
+search)
+search_tool "$2"
+;;
+
+install)
+install_tool "$2"
+;;
+
+info)
+info_tool "$2"
+;;
+
+update)
+update_tool "$2"
+;;
+
+*)
+show_help
+;;
+
+esac

@@ -1,0 +1,10 @@
+{
+  "tools": [
+    {
+      "name": "javix",
+      "category": "utils",
+      "version": "1.0",
+      "description": "Java Virtual X Execution runtime"
+    }
+  ]
+}

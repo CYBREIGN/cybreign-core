@@ -3,6 +3,7 @@
   "version": "1.1",
   "category": "utils",
   "description": "Run Java-8 GUI applications inside Termux without proot",
+  "supported":"termux",
   "platform": "termux",
   "package": "https://raw.githubusercontent.com/cybreign/cybreign-core/main/packages/utils/javix/javix.deb"
 }

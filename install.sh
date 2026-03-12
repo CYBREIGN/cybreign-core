@@ -37,7 +37,7 @@ if [ "$PLATFORM" = "termux" ]; then
 
     TMP="$HOME/cybreign.deb"
 
-    curl -L "$REPO/packages/cybreign.deb" -o "$TMP"
+    curl -L "$REPO/packages/main/cybreign.deb" -o "$TMP"
 
     dpkg -i "$TMP"
 

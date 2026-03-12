@@ -24,13 +24,13 @@ elif [ -f /etc/os-release ]; then
     PLATFORM="$ID"
 
 else
-    PLATFORM="unknown"
+    PLATFORM="linux"
 fi
 
 echo "Detected platform: $PLATFORM"
 
 ################################
-# Termux install
+# TERMUX INSTALL
 ################################
 
 if [ "$PLATFORM" = "termux" ]; then
@@ -42,7 +42,7 @@ if [ "$PLATFORM" = "termux" ]; then
     dpkg -i "$TMP"
 
 ################################
-# Debian based systems
+# DEBIAN BASED LINUX
 ################################
 
 elif [[ "$PLATFORM" = "ubuntu" || "$PLATFORM" = "debian" || "$PLATFORM" = "kali" ]]; then
@@ -54,7 +54,7 @@ elif [[ "$PLATFORM" = "ubuntu" || "$PLATFORM" = "debian" || "$PLATFORM" = "kali"
     sudo dpkg -i "$TMP"
 
 ################################
-# macOS / fallback
+# OTHER LINUX + MACOS
 ################################
 
 else
@@ -62,7 +62,6 @@ else
     INSTALL_DIR="/usr/local/bin"
 
     if [ ! -w "$INSTALL_DIR" ]; then
-        echo "Using sudo to install..."
         SUDO="sudo"
     fi
 

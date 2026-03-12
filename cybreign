@@ -1,59 +1,260 @@
 #!/usr/bin/env bash
 
-BASE_URL="https://raw.githubusercontent.com/cybreign/cybreign-core/main"
-TOOLS_JSON="$BASE_URL/tools.json"
+CYBREIGN_VERSION="1.1"
+
+REPO="${CYBREIGN_REPO:-https://raw.githubusercontent.com/cybreign/cybreign-core/main}"
+TOOLS_JSON="${CYBREIGN_TOOLS_JSON:-$REPO/tools.json}"
+WORKDIR="$HOME/.cybreign"
+
+mkdir -p "$WORKDIR"
+
+detect_platform() {
+
+if [ -n "$PREFIX" ] && [ -d "$PREFIX/bin" ]; then
+    PLATFORM="termux"
+
+elif [ "$(uname)" = "Darwin" ]; then
+    PLATFORM="macos"
+
+elif grep -qi microsoft /proc/version 2>/dev/null; then
+    PLATFORM="wsl"
+
+elif [ -f /etc/os-release ]; then
+    . /etc/os-release
+    PLATFORM="$ID"
+
+else
+    PLATFORM="unknown"
+fi
+
+}
+
+print_header() {
+
+echo "CYBREIGN Tool Manager"
+echo "Version: $CYBREIGN_VERSION"
+echo "Platform: $PLATFORM"
+echo
+
+}
 
 show_help() {
-echo "CYBREIGN Tool Manager
+
+print_header
+
+cat <<EOF
 
 Usage:
   cybreign list
   cybreign search <name>
-  cybreign install <tool>
+  cybreign install <tool> [--version X]
+  cybreign uninstall <tool>
   cybreign info <tool>
+  cybreign update
   cybreign update <tool>
 
 Examples:
   cybreign install javix
+  cybreign install javix --version 1.0
   cybreign search java
-"
+  cybreign update javix
+
+EOF
+
+}
+
+fetch_tools() {
+
+curl -fsSL "$TOOLS_JSON" -o "$WORKDIR/tools.json" || {
+  echo "Failed to download tool database"
+  exit 1
+}
+
+}
+
+extract_tool_block() {
+
+awk -v tool="$1" '
+BEGIN { RS="}"; ORS="" }
+$0 ~ "\"name\"[[:space:]]*:[[:space:]]*\"" tool "\"" {
+  gsub(/^[[:space:]]*,?[[:space:]]*\{?[[:space:]]*/, "{", $0)
+  print $0 "}"
+  exit
+}
+' "$WORKDIR/tools.json"
+
+}
+
+json_field() {
+
+FIELD="$1"
+BLOCK="$2"
+
+printf '%s\n' "$BLOCK" \
+  | tr '\n' ' ' \
+  | sed -nE "s/.*\"${FIELD}\"[[:space:]]*:[[:space:]]*\"([^\"]*)\".*/\1/p" \
+  | head -n 1
+
+}
+
+platform_supported() {
+
+SUPPORTED="$1"
+
+case "$SUPPORTED" in
+  ""|all|any)
+    return 0
+    ;;
+esac
+
+if [ "$SUPPORTED" = "$PLATFORM" ]; then
+  return 0
+fi
+
+printf '%s' "$SUPPORTED" \
+  | tr ',' '\n' \
+  | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+  | grep -Fx "$PLATFORM" >/dev/null 2>&1
+
 }
 
 list_tools() {
-curl -s $TOOLS_JSON | grep '"name"' | cut -d '"' -f4
+
+fetch_tools
+
+grep '"name"' "$WORKDIR/tools.json" | cut -d '"' -f4
+
 }
 
 search_tool() {
-curl -s $TOOLS_JSON | grep -i "$1"
+
+fetch_tools
+
+grep -i "$1" "$WORKDIR/tools.json"
+
+}
+
+tool_info() {
+
+TOOL_BLOCK=""
+
+fetch_tools
+TOOL_BLOCK="$(extract_tool_block "$1")"
+
+if [ -z "$TOOL_BLOCK" ]; then
+  echo "Tool not found: $1"
+  exit 1
+fi
+
+printf '%s\n' "$TOOL_BLOCK"
+
 }
 
 install_tool() {
 
-TOOL=$1
+TOOL="$1"
+VERSION="$2"
 
 if [ -z "$TOOL" ]; then
- echo "Tool name required"
- exit 1
+  echo "Tool name required"
+  exit 1
 fi
 
-URL="$BASE_URL/utils/${TOOL}.deb"
+fetch_tools
 
-echo "[CYBREIGN] Installing $TOOL..."
+TOOL_BLOCK="$(extract_tool_block "$TOOL")"
 
-curl -L "$URL" -o /tmp/${TOOL}.deb
+if [ -z "$TOOL_BLOCK" ]; then
+  echo "Tool not found: $TOOL"
+  exit 1
+fi
 
-dpkg -i /tmp/${TOOL}.deb
+SUPPORTED="$(json_field platform "$TOOL_BLOCK")"
 
-echo "$TOOL installed."
+if [ -z "$SUPPORTED" ]; then
+  SUPPORTED="$(json_field supported "$TOOL_BLOCK")"
+fi
+
+if ! platform_supported "$SUPPORTED"; then
+  echo "Tool not supported on this platform"
+  echo "Supported: $SUPPORTED"
+  exit 1
+fi
+
+PACKAGE_URL="$(json_field package "$TOOL_BLOCK")"
+
+if [ -n "$VERSION" ] && [ -n "$PACKAGE_URL" ]; then
+  PACKAGE_DIR="${PACKAGE_URL%/*}"
+  PACKAGE_URL="$PACKAGE_DIR/${TOOL}_${VERSION}.deb"
+fi
+
+if [ -z "$PACKAGE_URL" ]; then
+  CATEGORY="$(json_field category "$TOOL_BLOCK")"
+
+  if [ -z "$CATEGORY" ]; then
+    echo "Package metadata missing for $TOOL"
+    exit 1
+  fi
+
+  if [ -n "$VERSION" ]; then
+    FILE="${TOOL}_${VERSION}.deb"
+  else
+    FILE="${TOOL}.deb"
+  fi
+
+  PACKAGE_URL="$REPO/packages/$CATEGORY/$TOOL/$FILE"
+fi
+
+PACKAGE_FILE="$WORKDIR/${PACKAGE_URL##*/}"
+
+echo "Downloading $TOOL..."
+
+curl -fsSL "$PACKAGE_URL" -o "$PACKAGE_FILE" || {
+  echo "Download failed"
+  exit 1
 }
 
-info_tool() {
-curl -s $TOOLS_JSON | grep -A4 "$1"
+echo "Installing $TOOL..."
+
+dpkg -i "$PACKAGE_FILE"
+
+}
+
+uninstall_tool() {
+
+TOOL="$1"
+
+if [ -z "$TOOL" ]; then
+  echo "Tool name required"
+  exit 1
+fi
+
+apt remove "$TOOL"
+
 }
 
 update_tool() {
-install_tool "$1"
+
+TOOL="$1"
+
+if [ -z "$TOOL" ]; then
+  echo "Tool name required"
+  exit 1
+fi
+
+install_tool "$TOOL"
+
 }
+
+update_core() {
+
+echo "Updating CYBREIGN core..."
+
+curl -fsSL "$REPO/install.sh" | bash
+
+}
+
+detect_platform
 
 case "$1" in
 
@@ -66,15 +267,31 @@ search_tool "$2"
 ;;
 
 install)
-install_tool "$2"
+if [ "$3" = "--version" ]; then
+  install_tool "$2" "$4"
+else
+  install_tool "$2"
+fi
+;;
+
+uninstall)
+uninstall_tool "$2"
 ;;
 
 info)
-info_tool "$2"
+tool_info "$2"
 ;;
 
 update)
-update_tool "$2"
+if [ -z "$2" ]; then
+  update_core
+else
+  update_tool "$2"
+fi
+;;
+
+help)
+show_help
 ;;
 
 *)

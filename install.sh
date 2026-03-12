@@ -2,9 +2,26 @@
 
 set -e
 
-REPO="https://raw.githubusercontent.com/cybreign/cybreign-core/main"
+REPO="${CYBREIGN_REPO:-https://raw.githubusercontent.com/cybreign/cybreign-core/main}"
 
 echo "[CYBREIGN] Installing..."
+
+install_script() {
+    INSTALL_DIR="/usr/local/bin"
+    TMP="${TMPDIR:-/tmp}/cybreign"
+
+    if [ ! -w "$INSTALL_DIR" ]; then
+        SUDO="sudo"
+    else
+        SUDO=""
+    fi
+
+    curl -fsSL "$REPO/cybreign" -o "$TMP"
+
+    $SUDO install -m 755 "$TMP" "$INSTALL_DIR/cybreign"
+
+    rm -f "$TMP"
+}
 
 ################################
 # Detect platform
@@ -47,11 +64,7 @@ if [ "$PLATFORM" = "termux" ]; then
 
 elif [[ "$PLATFORM" = "ubuntu" || "$PLATFORM" = "debian" || "$PLATFORM" = "kali" ]]; then
 
-    TMP="/tmp/cybreign.deb"
-
-    curl -L "$REPO/packages/cybreign.deb" -o "$TMP"
-
-    sudo dpkg -i "$TMP"
+    install_script
 
 ################################
 # OTHER LINUX + MACOS
@@ -59,15 +72,7 @@ elif [[ "$PLATFORM" = "ubuntu" || "$PLATFORM" = "debian" || "$PLATFORM" = "kali"
 
 else
 
-    INSTALL_DIR="/usr/local/bin"
-
-    if [ ! -w "$INSTALL_DIR" ]; then
-        SUDO="sudo"
-    fi
-
-    $SUDO curl -L "$REPO/cybreign" -o "$INSTALL_DIR/cybreign"
-
-    $SUDO chmod +x "$INSTALL_DIR/cybreign"
+    install_script
 
 fi
 

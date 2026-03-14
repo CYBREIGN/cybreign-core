@@ -16,14 +16,14 @@
           "latest": "1.1",
           "versions": {
             "1.1": {
-              "deb": "https://raw.githubusercontent.com/cybreign/cybreign-core/main/packages/utils/javix/javix_v1.1.deb",
+              "deb": "https://raw.githubusercontent.com/CYBREIGN/cybreign-core/main/packages/utils/javix/javix_v1.1.deb",
               "changelog": "Fixed GUI startup, added restart/logs/setup commands",
               "date": "2025-01-01",
               "depends": ["bash", "busybox", "tigervnc", "fluxbox", "glibc-runner"],
               "architecture": "termux"
             },
             "1.0": {
-              "deb": "https://raw.githubusercontent.com/cybreign/cybreign-core/main/packages/utils/javix/javix_v1.0.deb",
+              "deb": "https://raw.githubusercontent.com/CYBREIGN/cybreign-core/main/packages/utils/javix/javix_v1.0.deb",
               "changelog": "Initial release",
               "date": "2024-01-01",
               "depends": ["bash", "busybox", "tigervnc", "fluxbox", "glibc-runner"],

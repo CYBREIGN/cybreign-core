@@ -1,9 +1,49 @@
 {
-  "name": "javix",
-  "version": "1.1",
-  "category": "utils",
-  "description": "Run Java-8 GUI applications inside Termux without proot",
-  "supported":"termux",
-  "platform": "termux",
-  "package": "https://raw.githubusercontent.com/cybreign/cybreign-core/main/packages/utils/javix/javix.deb"
+  "cybreign_db": "1.0",
+  "last_updated": "2025-01-01",
+  "categories": {
+    "utils": {
+      "label": "Utilities",
+      "tools": {
+        "javix": {
+          "name": "javix",
+          "label": "Java Virtual X Execution",
+          "description": "Run Java-8 GUI applications inside Termux without proot",
+          "maintainer": "Pidugu Likhil",
+          "organization": "CYBREIGN",
+          "homepage": "https://github.com/pidugulikhil/javix",
+          "supported": ["termux"],
+          "latest": "1.1",
+          "versions": {
+            "1.1": {
+              "deb": "https://raw.githubusercontent.com/cybreign/cybreign-core/main/packages/utils/javix/javix_v1.1.deb",
+              "changelog": "Fixed GUI startup, added restart/logs/setup commands",
+              "date": "2025-01-01",
+              "depends": ["bash", "busybox", "tigervnc", "fluxbox", "glibc-runner"],
+              "architecture": "termux"
+            },
+            "1.0": {
+              "deb": "https://raw.githubusercontent.com/cybreign/cybreign-core/main/packages/utils/javix/javix_v1.0.deb",
+              "changelog": "Initial release",
+              "date": "2024-01-01",
+              "depends": ["bash", "busybox", "tigervnc", "fluxbox", "glibc-runner"],
+              "architecture": "termux"
+            }
+          }
+        }
+      }
+    },
+    "security": {
+      "label": "Security",
+      "tools": {}
+    },
+    "network": {
+      "label": "Network",
+      "tools": {}
+    },
+    "dev": {
+      "label": "Development",
+      "tools": {}
+    }
+  }
 }

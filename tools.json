@@ -8,7 +8,7 @@
         "javix": {
           "name": "javix",
           "label": "Java Virtual X Execution",
-          "description": "Run Java-8 GUI applications inside Termux without proot",
+          "description": "Run Java-8 java, javac and mainly appletviewer applications inside Termux.",
           "maintainer": "Pidugu Likhil",
           "organization": "CYBREIGN",
           "homepage": "https://github.com/pidugulikhil/javix",
